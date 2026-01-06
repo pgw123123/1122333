@@ -1,0 +1,9 @@
+---
+- name: Deploy 4team Security Groups
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - global_vars/all_vars
+  roles:
+    - role: roles/asg

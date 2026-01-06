@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - global_vars/all_vars
+  tasks:
+  roles:
+    - iam

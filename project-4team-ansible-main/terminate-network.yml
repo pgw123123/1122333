@@ -1,0 +1,6 @@
+- hosts: localhost
+  connection: local
+  vars_files:
+    - global_vars/all_vars
+  tasks:
+    - include_role: { name: network, tasks_from: terminate }

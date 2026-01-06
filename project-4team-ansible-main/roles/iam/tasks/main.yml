@@ -1,0 +1,26 @@
+---
+- name: Create IAM Role with S3, SSM, and CodeDeploy permissions
+  community.aws.iam_role:
+    name: "{{ project_name }}-jenkins-ssm-role"
+    assume_role_policy_document: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": { "Service": "ec2.amazonaws.com" },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      }
+    managed_policies:
+      - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+      - "arn:aws:iam::aws:policy/AWSCodeDeployFullAccess"
+    create_instance_profile: yes
+    state: present
+  register: iam_role_result
+
+- name: Debug IAM Role ARN
+  debug:
+    msg: "IAM Role Created: {{ iam_role_result.iam_role.arn }}"

@@ -1,0 +1,64 @@
+---
+# 1. 기본 정보 조회 (VPC, Subnet, SG)
+- name: Get VPC Info
+  amazon.aws.ec2_vpc_net_info:
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ project_name }}-vpc"
+  register: target_vpc_info
+
+- name: Get Public Subnets
+  amazon.aws.ec2_vpc_subnet_info:
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ project_name }}-pub-sub-*"
+  register: public_subnets_info
+
+- name: Get ALB Security Group
+  amazon.aws.ec2_group_info:
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ project_name }}-alb-sg"
+  register: alb_sg_info
+
+# 2. 타겟 그룹 생성
+- name: Create Target Group
+  community.aws.elb_target_group:
+    name: "{{ project_name }}-tg"
+    protocol: HTTP
+    port: 8080
+    vpc_id: "{{ target_vpc_info.vpcs[0].vpc_id }}"
+    region: "{{ aws_region }}"
+    # [수정] 아래 두 줄은 짝꿍입니다. 꼭 같이 써야 합니다.
+    health_check_path: "/"
+    health_check_protocol: HTTP  # <--- 이 줄이 추가되었습니다!
+    health_check_interval: 30
+    healthy_threshold_count: 2
+    unhealthy_threshold_count: 2
+    target_type: instance
+    state: present
+    tags: "{{ common_tags | combine({'Name': project_name + '-tg'}) }}"
+  register: target_group
+
+# 3. ALB 및 리스너 생성
+- name: Create ALB with Listener
+  amazon.aws.elb_application_lb:
+    name: "{{ project_name }}-alb"
+    security_groups:
+      - "{{ alb_sg_info.security_groups[0].group_id }}"
+    subnets: "{{ public_subnets_info.subnets | map(attribute='subnet_id') | list }}"
+    region: "{{ aws_region }}"
+    scheme: internet-facing
+    listeners:
+      - Protocol: HTTP
+        Port: 80
+        DefaultActions:
+          - Type: forward
+            TargetGroupArn: "{{ target_group.target_group_arn }}"
+    state: present
+    tags: "{{ common_tags | combine({'Name': project_name + '-alb'}) }}"
+  register: alb_result
+
+- name: Debug ALB DNS Name
+  debug:
+    msg: "ALB Address: http://{{ alb_result.dns_name }}"

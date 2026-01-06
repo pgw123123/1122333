@@ -1,0 +1,15 @@
+---
+- name: Deploy Team4 Jenkins Server (Infrastructure Only)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  collections:
+    - amazon.aws
+    - community.aws
+
+  vars_files:
+    - global_vars/all_vars
+
+  roles:
+    - jenkins
