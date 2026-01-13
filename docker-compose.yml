@@ -1,0 +1,13 @@
+services:
+  petclinic:
+    image: gw9965/spring-petclinic:latest
+    container_name: petclinic
+    ports:
+      - "80:8080"
+    environment:
+      # [핵심] RDS 연결 정보 주입 (Jenkins나 EC2 환경변수에서 받아옴)
+      - SPRING_PROFILES_ACTIVE=mysql
+      - MYSQL_URL=jdbc:mysql://${RDS_ENDPOINT}:3306/petclinic
+      - MYSQL_USER=${RDS_USERNAME}
+      - MYSQL_PASS=${RDS_PASSWORD}
+    restart: always

@@ -1,0 +1,21 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu
+    overwrite: yes
+file_exists_behavior: OVERWRITE
+permissions:
+  - object: /home/ubuntu
+    pattern: "**"
+    owner: ubuntu
+    group: ubuntu
+hooks:
+  ApplicationStop:
+    - location: script/kill_process.sh
+      timeout: 100
+      runas: root  # [변경] ubuntu -> root (도커 죽이려면 root 필요)
+  ApplicationStart:      
+    - location: script/run_process.sh
+      timeout: 300
+      runas: root  # [변경] ubuntu -> root (도커 실행하려면 root 필요)
